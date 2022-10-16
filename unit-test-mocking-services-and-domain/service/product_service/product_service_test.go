@@ -108,3 +108,52 @@ func TestProductservice_CreateProduct_ServerError(t *testing.T) {
 	assert.EqualValues(t, "something went wrong", err.Message())
 	assert.EqualValues(t, "server_error", err.Error())
 }
+
+func TestProductService_UpdateProduct_Success(t *testing.T) {
+	product_domain.ProductDomain = &productDomainMock{}
+
+	requestBody := &product_domain.Product{
+		Name:  "Product Test",
+		Price: 10.10,
+		Stock: 5,
+	}
+
+	expectedVal := &product_domain.Product{
+		Id:        1,
+		Name:      "Product Test",
+		Price:     10.10,
+		Stock:     5,
+		CreatedAt: tm,
+	}
+
+	updateProduct = func(p *product_domain.Product) (*product_domain.Product, error_utils.MessageErr) {
+		return expectedVal, nil
+	}
+
+	product, err := ProductService.UpdateProduct(requestBody)
+
+	assert.Nil(t, err)
+
+	assert.NotNil(t, product)
+
+	assert.EqualValues(t, expectedVal.Id, product.Id)
+	assert.EqualValues(t, expectedVal.Name, product.Name)
+	assert.EqualValues(t, expectedVal.Price, product.Price)
+	assert.EqualValues(t, expectedVal.Stock, product.Stock)
+}
+
+func TestProductService_UpdateProduct_BadRequest(t *testing.T) {
+	requestBody := &product_domain.Product{
+		Price: 10.10,
+		Stock: 5,
+	}
+
+	product, err := ProductService.UpdateProduct(requestBody)
+
+	assert.NotNil(t, err)
+	assert.Nil(t, product)
+
+	assert.EqualValues(t, 400, err.Status())
+	assert.EqualValues(t, "name is required", err.Message())
+	assert.EqualValues(t, "bad_request", err.Error())
+}

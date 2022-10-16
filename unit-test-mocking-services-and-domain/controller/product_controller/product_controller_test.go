@@ -182,3 +182,66 @@ func TestProductController_CreateProduct_ServerError(t *testing.T) {
 	assert.EqualValues(t, "server_error", errData.ErrError)
 	assert.EqualValues(t, 500, errData.Status())
 }
+
+func TestProductController_GetProducts_Success(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/products", nil)
+
+	router := gin.Default()
+
+	gin.SetMode(gin.TestMode)
+
+	rr := httptest.NewRecorder()
+
+	router.GET("/products", GetProducts)
+
+	router.ServeHTTP(rr, req)
+
+	result := rr.Result()
+
+	data, err := ioutil.ReadAll(result.Body)
+
+	defer result.Body.Close()
+
+	require.Nil(t, err)
+
+	assert.NotNil(t, data)
+}
+
+func TestProductController_UpdateProduct_InvalidJSONBody(t *testing.T) {
+	requestBody := `
+		{
+			"name": "name",
+			"price": 30.50,
+			"stock": 100
+		
+	`
+
+	req := httptest.NewRequest(http.MethodPut, "/products/1", bytes.NewBufferString(requestBody))
+
+	router := gin.Default()
+
+	gin.SetMode(gin.TestMode)
+
+	rr := httptest.NewRecorder()
+
+	router.PUT("/products/1", UpdateProduct)
+
+	router.ServeHTTP(rr, req)
+
+	result := rr.Result()
+
+	data, err := ioutil.ReadAll(result.Body)
+
+	defer result.Body.Close()
+
+	require.Nil(t, err)
+
+	var errData error_utils.MessageErrData
+
+	err = json.Unmarshal(data, &errData)
+
+	assert.Nil(t, err)
+	assert.EqualValues(t, "invalid json body", errData.ErrMessage)
+	assert.EqualValues(t, "invalid_request", errData.ErrError)
+	assert.EqualValues(t, 422, errData.Status())
+}
